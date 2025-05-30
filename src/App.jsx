@@ -7,6 +7,9 @@ function App() {
   // State to hold the list of recorded times, limited to the 5 latest
   const [recordedTimes, setRecordedTimes] = useState([]);
 
+  // Helper function to format a number with a leading zero if it's a single digit
+  const formatTwoDigits = (num) => String(num).padStart(2, '0');
+
   // useEffect hook to manage the real-time clock display
   useEffect(() => {
     // Set up an interval to update the current date and time every 1000 milliseconds (1 second)
@@ -37,8 +40,19 @@ function App() {
 
   // Function to handle the "Record Time" button click
   const recordTime = () => {
-    // Get the current date and time in a localized string format
-    const newRecordedTime = new Date().toLocaleString();
+    const now = new Date();
+
+    // Manually format the date and time to ensure consistent alignment
+    // This provides control over leading zeros for hours, minutes, and seconds.
+    const year = now.getFullYear();
+    const month = formatTwoDigits(now.getMonth() + 1); // getMonth() is 0-indexed
+    const day = formatTwoDigits(now.getDate());
+    const hours = formatTwoDigits(now.getHours());
+    const minutes = formatTwoDigits(now.getMinutes());
+    const seconds = formatTwoDigits(now.getSeconds());
+
+    // Construct the formatted time string
+    const newRecordedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 
     // Create a new array:
     // 1. Add the `newRecordedTime` to the beginning.
@@ -98,7 +112,8 @@ function App() {
                 {/* Map through the recordedTimes array to display each timestamp in a table row */}
                 {recordedTimes.map((time, index) => (
                   <tr key={index} className="hover:bg-gray-600">
-                    <td className="py-3 px-4 whitespace-nowrap text-gray-200 text-base">
+                    {/* Added font-mono class to ensure fixed width characters for recorded times */}
+                    <td className="py-3 px-4 whitespace-nowrap text-gray-200 text-base font-mono">
                       {time}
                     </td>
                   </tr>
