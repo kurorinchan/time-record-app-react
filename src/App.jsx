@@ -60,15 +60,15 @@ function App() {
   };
 
   return (
-    // Removed `justify-center` and `items-center` for top-left alignment
-    // Added `justify-start` and `items-start`
+    // Content aligned to top-left with padding
     <div className="min-h-screen bg-gray-900 flex flex-col items-start justify-start p-4 font-inter">
       <div className="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md">
         {/* Section for displaying current date and time */}
         <h1 className="text-2xl font-semibold text-gray-100 mb-4 text-center">
           Current Date and Time:
         </h1>
-        <p className="text-3xl font-bold text-blue-400 mb-6 text-center">
+        {/* Added font-mono class to ensure fixed width characters */}
+        <p className="text-3xl font-bold text-blue-400 mb-6 text-center font-mono">
           {currentDateTime.toLocaleString()}
         </p>
 
