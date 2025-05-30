@@ -1,0 +1,32 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # Or 'master', depending on your default branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22' # Or '18', '22' - use a stable Node.js version
+
+      - name: Install dependencies (pnpm)
+        run: pnpm install --frozen-lockfile # --frozen-lockfile is good practice for CI/CD
+
+      - name: Build project (pnpm)
+        run: pnpm build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3 # Use v3 for stability
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist # Vite builds to the 'dist' directory by default
+          publish_branch: gh-pages # This action will create/update the 'gh-pages' branch
