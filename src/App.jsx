@@ -4,8 +4,12 @@ import React, { useState, useEffect } from 'react';
 function App() {
   // State to hold the current date and time, updated every second
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
-  // State to hold the list of recorded times, limited to the 5 latest
+  // State to hold the list of recorded times, limited to the 5 latest.
+  // Each item is an object: { formattedTime: string, timestamp: number (milliseconds) }
   const [recordedTimes, setRecordedTimes] = useState([]);
+  // State to hold the calculated elapsed time strings for ALL records
+  // This array will mirror recordedTimes, holding the formatted elapsed string for each.
+  const [allElapsedTimes, setAllElapsedTimes] = useState([]);
 
   // Helper function to format a number with a leading zero if it's a single digit
   const formatTwoDigits = (num) => String(num).padStart(2, '0');
@@ -27,7 +31,7 @@ function App() {
     try {
       // Attempt to retrieve 'recordedTimes' from localStorage
       const storedTimes = localStorage.getItem('recordedTimes');
-      // If data exists, parse it from JSON string back to a JavaScript array.
+      // If data exists, parse it from JSON string back to a JavaScript array of objects.
       // If no data, default to an empty array.
       const parsedTimes = storedTimes ? JSON.parse(storedTimes) : [];
       setRecordedTimes(parsedTimes);
@@ -37,6 +41,40 @@ function App() {
       setRecordedTimes([]); // Ensure recordedTimes is an empty array on error
     }
   }, []); // Empty dependency array means this effect runs once on mount
+
+  // useEffect hook to calculate and update the elapsed time for ALL records
+  // This effect runs whenever currentDateTime or recordedTimes changes.
+  useEffect(() => {
+    if (recordedTimes.length > 0) {
+      const nowMs = currentDateTime.getTime(); // Use the real-time currentDateTime for calculation
+
+      // Map over the recordedTimes to calculate elapsed time for each entry
+      const newElapsedTimes = recordedTimes.map(record => {
+        const diffMs = nowMs - record.timestamp; // Difference in milliseconds
+
+        // Ensure diffMs is not negative (e.g., if system clock changes backwards)
+        if (diffMs < 0) return '00 h 00 m';
+
+        // Convert milliseconds difference to hours and minutes
+        const totalMinutes = Math.floor(diffMs / (1000 * 60));
+        const diffHours = Math.floor(totalMinutes / 60);
+        const remainingMinutes = totalMinutes % 60;
+
+        // Format hours and minutes with leading zeros
+        const formattedHours = formatTwoDigits(diffHours);
+        const formattedMinutes = formatTwoDigits(remainingMinutes);
+
+        return `${formattedHours} h ${formattedMinutes} m`;
+      });
+
+      // Update the state with the new array of elapsed times
+      setAllElapsedTimes(newElapsedTimes);
+    } else {
+      // If no records, reset elapsed times display
+      setAllElapsedTimes([]);
+    }
+  }, [currentDateTime, recordedTimes]); // Dependencies: currentDateTime (for real-time update) and recordedTimes (when new entries are added)
+
 
   // Function to handle the "Record Time" button click
   const recordTime = () => {
@@ -52,20 +90,26 @@ function App() {
     const seconds = formatTwoDigits(now.getSeconds());
 
     // Construct the formatted time string
-    const newRecordedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    const formattedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+    // Create a new record object containing both formatted time and raw timestamp
+    const newRecord = {
+      formattedTime: formattedTime,
+      timestamp: now.getTime() // Store milliseconds since epoch for calculations
+    };
 
     // Create a new array:
-    // 1. Add the `newRecordedTime` to the beginning.
+    // 1. Add the `newRecord` object to the beginning.
     // 2. Spread the existing `recordedTimes` after it.
     // 3. Use `.slice(0, 5)` to ensure only the 5 most recent records are kept.
-    const updatedTimes = [newRecordedTime, ...recordedTimes].slice(0, 5);
+    const updatedTimes = [newRecord, ...recordedTimes].slice(0, 5);
 
     // Update the component's state with the new list of recorded times
     setRecordedTimes(updatedTimes);
 
     try {
       // Save the updated list to localStorage.
-      // localStorage only stores strings, so we convert the array to a JSON string.
+      // localStorage only stores strings, so we convert the array of objects to a JSON string.
       localStorage.setItem('recordedTimes', JSON.stringify(updatedTimes));
     } catch (error) {
       // Log any errors that occur during localStorage write (e.g., storage full)
@@ -106,15 +150,22 @@ function App() {
                   <th className="py-3 px-4 text-left text-sm font-medium text-gray-200 uppercase tracking-wider border-b border-gray-600">
                     Timestamp
                   </th>
+                  {/* New table header for Elapsed Time */}
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-200 uppercase tracking-wider border-b border-gray-600">
+                    Elapsed
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-600">
                 {/* Map through the recordedTimes array to display each timestamp in a table row */}
-                {recordedTimes.map((time, index) => (
-                  <tr key={index} className="hover:bg-gray-600">
-                    {/* Added font-mono class to ensure fixed width characters for recorded times */}
+                {recordedTimes.map((record, index) => (
+                  // Removed whitespace/newline between <tr> and <td>
+                  <tr key={record.timestamp} className="hover:bg-gray-600"><td className="py-3 px-4 whitespace-nowrap text-gray-200 text-base font-mono">
+                    {record.formattedTime}
+                  </td>
+                    {/* Display elapsed time for each record from allElapsedTimes state */}
                     <td className="py-3 px-4 whitespace-nowrap text-gray-200 text-base font-mono">
-                      {time}
+                      {allElapsedTimes[index]}
                     </td>
                   </tr>
                 ))}
