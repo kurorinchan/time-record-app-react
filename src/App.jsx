@@ -26,6 +26,14 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
+  // NEW: useEffect hook to update the document title with the current time
+  useEffect(() => {
+    const hours = formatTwoDigits(currentDateTime.getHours());
+    const minutes = formatTwoDigits(currentDateTime.getMinutes());
+    // Changed the order to HH:MM - Time Recorder App
+    document.title = `${hours}:${minutes} - Time Recorder App`;
+  }, [currentDateTime]); // Re-run this effect whenever currentDateTime changes
+
   // useEffect hook to load recorded times from localStorage when the component mounts
   useEffect(() => {
     try {
